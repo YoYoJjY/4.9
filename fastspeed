@@ -1,15 +1,15 @@
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+-- GUI Setup (only once)
+local gui = Instance.new("ScreenGui")
 gui.Name = "SpeedButtonGui"
 gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- Beweglicher Button
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 120, 0, 40)
 button.Position = UDim2.new(0.4, 0, 0.4, 0)
-button.Text = "Speed 4.8"
+button.Text = "Speed 4.6"
 button.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
 button.TextColor3 = Color3.new(1, 1, 1)
 button.Font = Enum.Font.SourceSansBold
@@ -18,20 +18,35 @@ button.Draggable = true
 button.Active = true
 button.Parent = gui
 
--- Funktion: Speed anpassen
-local function applySpeed(speed)
+-- Function to apply speed to all animations
+local function applySpeed(humanoid, speed)
     for _, track in ipairs(humanoid.Animator:GetPlayingAnimationTracks()) do
         track:AdjustSpeed(speed)
     end
 end
 
--- Immer Speed 4.8 bei neuen Animationen
-local function onAnimationPlayed(track)
-    track:AdjustSpeed(4.8)
+-- When a new animation plays, set its speed
+local function connectAnimationSpeed(humanoid, speed)
+    humanoid.Animator.AnimationPlayed:Connect(function(track)
+        track:AdjustSpeed(speed)
+    end)
 end
 
--- Click-Handler
-button.MouseButton1Click:Connect(function()
-    applySpeed(4.8)
-    humanoid.Animator.AnimationPlayed:Connect(onAnimationPlayed)
-end)
+-- Set up for the current or respawned character
+local function setupCharacter(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    connectAnimationSpeed(humanoid, 4.6)
+
+    -- Button click event
+    button.MouseButton1Click:Connect(function()
+        applySpeed(humanoid, 4.6)
+    end)
+end
+
+-- Initial setup
+if player.Character then
+    setupCharacter(player.Character)
+end
+
+-- Re-setup after respawn
+player.CharacterAdded:Connect(setupCharacter)
